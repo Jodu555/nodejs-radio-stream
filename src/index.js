@@ -5,6 +5,8 @@ const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const dotenv = require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -26,14 +28,18 @@ if (process.env.https) {
 
 // Your Middleware handlers here
 
-const audioFile = '';
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+const audioFile = 'mukke.mp3';
 
 app.get('/radio', (req, res) => {
     const range = req.headers.range;
     if (!range) {
-        res.status(400).send("Requires Range header");
+        return res.status(400).send("Requires Range header");
     }
-    const videoSize = fs.statSync("Chris-Do.mp4").size;
+    const videoSize = fs.statSync(audioFile).size;
     const CHUNK_SIZE = 10 ** 6;
     const start = Number(range.replace(/\D/g, ""));
     const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
@@ -44,9 +50,10 @@ app.get('/radio', (req, res) => {
         "Content-Length": contentLength,
         "Content-Type": "audio/mp3",
     };
+    console.log(headers);
     res.writeHead(206, headers);
-    const videoStream = fs.createReadStream(videoPath, { start, end });
-    videoStream.pipe(res);
+    const audioStream = fs.createReadStream(audioFile, { start, end });
+    audioStream.pipe(res);
 });
 
 
